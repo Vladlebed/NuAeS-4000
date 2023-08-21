@@ -24,13 +24,18 @@
             <v-card color="white" class="pa-4 fill-height">
               <v-card-title>Вывод</v-card-title>
               <div>
-                <div class="d-flex">
-                  <v-textarea v-model="encryptString" variant="underlined" label="Шифрованная строка" hide-details class="mb-4"/>
-                  <div class="ml-4 d-flex flex-column">
-                    <v-btn color="primary" :disabled="!encryptString" @click="copyResult">Скопировать</v-btn>
-                    <v-btn color="primary" class="mt-4" :disabled="!encryptString" @click="saveResult">Скачать</v-btn>
-                    <v-file-input label="Архив" variant="underlined" hide-details class="mb-4" @update:model-value="putArchive"/>
-                  </div>
+                <div>
+                  <v-textarea v-if="isResultView" v-model="encryptString" variant="underlined" label="Шифрованная строка" hide-details class="mb-4"/>
+                  <v-checkbox v-model="isResultView" :label="isResultView ? 'Скрыть вывод' : 'Показать вывод'"/>
+                  <v-row align="center">
+                    <v-col xl="8" md="12">
+                      <v-btn color="primary" :disabled="!encryptString" class="mr-4" @click="copyResult">Скопировать</v-btn>
+                      <v-btn color="primary" :disabled="!encryptString" @click="saveResult">Скачать</v-btn>
+                    </v-col>
+                    <v-col xl="4" md="12">
+                      <v-file-input label="Загрузить архив" variant="underlined" hide-details @update:model-value="putArchive"/>
+                    </v-col>
+                  </v-row>
                 </div>
                 <v-btn width="100%" color="primary" class="mt-4" :disabled="!encryptString || !secretString" @click="decrypt">Расшифровать</v-btn>
               </div>
@@ -65,6 +70,7 @@ export default {
       secretString: '',
       encryptString: '',
       allowSaveSecret: false,
+      isResultView: false
     }
   },
 
@@ -73,13 +79,15 @@ export default {
       this.photos = await Promise.all(photos.map((photoFile) => getBase64(photoFile)))
     },
 
-    encrypt() {
-      this.encryptString = CryptoJS.AES.encrypt(this.photos.join(separator), this.secretString).toString()
+    async encrypt() {
+      const promises = this.photos.map(async (photo) => await CryptoJS.AES.encrypt(photo, this.secretString).toString())
+      this.encryptString = await Promise.all(promises).then((r) => r.join(separator))
+      console.log('this.encryptString', this.encryptString)
     },
 
-    decrypt() {
-      const bytes = CryptoJS.AES.decrypt(this.encryptString, this.secretString)
-      this.photos = bytes.toString(CryptoJS.enc.Utf8).split(separator)
+    async decrypt() {
+      const rawPhotos = this.encryptString.split(separator)
+      this.photos = await Promise.all(rawPhotos.map(async (photo) => await CryptoJS.AES.decrypt(photo, this.secretString).toString(CryptoJS.enc.Utf8)))
     },
 
     copyResult() {
