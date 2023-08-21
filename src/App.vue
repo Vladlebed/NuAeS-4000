@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main class="bg-primary">
-      <v-container>
+      <v-container ref="container">
         <v-row>
           <v-col>
             <v-card color="white" class="pa-4">
@@ -15,7 +15,7 @@
             <v-card color="white" class="pa-4 d-flex flex-column fill-height">
               <div class="flex-grow-1">
                 <v-card-title>Ввод</v-card-title>
-                <v-file-input label="Выбрать фото" variant="underlined" hide-details multiple class="mb-4" @update:model-value="changePhotos"/>
+                <v-file-input label="Выбрать фото" accept="image/png, image/jpeg, image/jpg, image/JPG, image/JPEG" variant="underlined" hide-details multiple class="mb-4" @update:model-value="changePhotos"/>
               </div>
               <v-btn width="100%" color="primary" class="mt-auto" :disabled="!photos.length || !secretString" @click="encrypt">Зашифровать</v-btn>
             </v-card>
@@ -33,7 +33,7 @@
                       <v-btn color="primary" :disabled="!encryptString" @click="saveResult">Скачать</v-btn>
                     </v-col>
                     <v-col xl="4" md="12">
-                      <v-file-input label="Загрузить архив" variant="underlined" hide-details @update:model-value="putArchive"/>
+                      <v-file-input label="Загрузить архив" accept=".zip" variant="underlined" hide-details @update:model-value="putArchive"/>
                     </v-col>
                   </v-row>
                 </div>
@@ -42,13 +42,20 @@
             </v-card>
           </v-col>
         </v-row>
-        <v-row>
-          <v-col class="d-flex flex-wrap">
-            <v-card v-for="photo in photos" class="pa-2 bg-white ma-2">
-              <img class="photo" :src="photo" alt="">
-            </v-card>
-          </v-col>
-        </v-row>
+        <template v-if="photos.length">
+          <div class="d-flex justify-center mt-4 mb-4">
+            <v-btn width="100%" color="white" variant="text">Скачать всё</v-btn>
+          </div>
+          <v-row>
+            <v-col class="d-flex justify-center">
+              <div v-for="(column, columnIndex) in columns" :key="columnIndex">
+                <v-card v-for="photo in column" class="pa-2 photo-card align-self-start d-flex flex-column bg-white h-auto ma-2">
+                  <img class="photo" :src="photo" alt="">
+                </v-card>
+              </div>
+            </v-col>
+          </v-row>
+        </template>
       </v-container>
     </v-main>
   </v-app>
@@ -70,8 +77,36 @@ export default {
       secretString: '',
       encryptString: '',
       allowSaveSecret: false,
-      isResultView: false
+      isResultView: false,
+      containerWidth: 1,
     }
+  },
+
+  computed: {
+    gap() {
+      return Math.ceil(this.containerWidth / 316)
+    },
+
+    columns() {
+      if (!this.photos.length) return []
+      const groups = new Array(this.gap)
+      let currentIndex = 0
+      let counter = 0
+      while (counter < this.photos.length) {
+        if (!groups[currentIndex]) groups[currentIndex] = []
+        if (currentIndex === this.gap - 1) currentIndex = 0
+        if (currentIndex < this.gap - 1) {
+          groups[currentIndex].push(this.photos[counter])
+        }
+        counter++
+        currentIndex++
+      }
+      return groups
+    },
+  },
+
+  mounted() {
+    this.containerWidth = this.$refs.container.$el.clientWidth
   },
 
   methods: {
@@ -82,12 +117,12 @@ export default {
     async encrypt() {
       const promises = this.photos.map(async (photo) => await CryptoJS.AES.encrypt(photo, this.secretString).toString())
       this.encryptString = await Promise.all(promises).then((r) => r.join(separator))
-      console.log('this.encryptString', this.encryptString)
     },
 
     async decrypt() {
       const rawPhotos = this.encryptString.split(separator)
       this.photos = await Promise.all(rawPhotos.map(async (photo) => await CryptoJS.AES.decrypt(photo, this.secretString).toString(CryptoJS.enc.Utf8)))
+      console.log('rawPhotos', rawPhotos)
     },
 
     copyResult() {
@@ -133,12 +168,13 @@ export default {
     this.allowSaveSecret = !!+localStorage.getItem('allowSaveSecret')
     const secret = localStorage.getItem('secret')
     if (this.allowSaveSecret && secret) this.secretString = secret
-  }
+  },
 }
 </script>
 
 <style lang="scss">
 .photo {
-  max-width: 200px;
+  max-width: 300px;
+
 }
 </style>
