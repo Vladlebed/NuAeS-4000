@@ -15,9 +15,9 @@
             <v-card color="white" class="pa-4 d-flex flex-column fill-height">
               <div class="flex-grow-1">
                 <v-card-title>Ввод</v-card-title>
-                <v-file-input label="Выбрать фото" accept="image/png, image/jpeg, image/jpg, image/JPG, image/JPEG" variant="underlined" hide-details multiple class="mb-4" @update:model-value="changePhotos"/>
+                <v-file-input label="Выбрать медиа" accept="image/png, image/jpeg, image/jpg, image/JPG, image/JPEG, video/mp4" variant="underlined" hide-details multiple class="mb-4" @update:model-value="changeItems"/>
               </div>
-              <v-btn width="100%" color="primary" class="mt-auto" :disabled="!photos.length || !secretString" @click="encrypt">Зашифровать</v-btn>
+              <v-btn width="100%" color="primary" class="mt-auto" :disabled="!items.length || !secretString" @click="encrypt">Зашифровать</v-btn>
             </v-card>
           </v-col>
           <v-col xl="6" md="12">
@@ -42,15 +42,28 @@
             </v-card>
           </v-col>
         </v-row>
-        <template v-if="photos.length">
-          <div class="d-flex justify-center mt-4 mb-4">
+        <template v-if="items.length">
+          <div v-if="false" class="d-flex justify-center mt-4 mb-4">
             <v-btn width="100%" color="white" variant="text">Скачать всё</v-btn>
           </div>
           <v-row>
             <v-col class="d-flex justify-center">
               <div v-for="(column, columnIndex) in columns" :key="columnIndex">
-                <v-card v-for="photo in column" class="pa-2 photo-card align-self-start d-flex flex-column bg-white h-auto ma-2">
-                  <img class="photo" :src="photo" alt="">
+                <v-card v-for="(item, itemIndex) in column" :key="itemIndex" class="pa-2 item-card align-self-start d-flex flex-column bg-white h-auto ma-2 position-relative">
+                  <img v-if="checkForImage(item)" class="media" :src="item" alt="">
+                  <video v-else class="media" controls :src="item"/>
+                  <div class="position-absolute controls flex-grow-1 d-flex pa-2">
+                    <v-btn icon color="primary" size="x-small" class="mr-2" @click="removeItem(item)">
+                      <v-icon>
+                        mdi-close
+                      </v-icon>
+                    </v-btn>
+                    <v-btn v-if="false" icon color="primary" size="x-small">
+                      <v-icon>
+                        mdi-download
+                      </v-icon>
+                    </v-btn>
+                  </div>
                 </v-card>
               </div>
             </v-col>
@@ -73,7 +86,7 @@ const separator = '*-*'
 export default {
   data() {
     return {
-      photos: [],
+      items: [],
       secretString: '',
       encryptString: '',
       allowSaveSecret: false,
@@ -88,15 +101,15 @@ export default {
     },
 
     columns() {
-      if (!this.photos.length) return []
+      if (!this.items.length) return []
       const groups = new Array(this.gap)
       let currentIndex = 0
       let counter = 0
-      while (counter < this.photos.length) {
+      while (counter < this.items.length) {
         if (!groups[currentIndex]) groups[currentIndex] = []
         if (currentIndex === this.gap - 1) currentIndex = 0
         if (currentIndex < this.gap - 1) {
-          groups[currentIndex].push(this.photos[counter])
+          groups[currentIndex].push(this.items[counter])
         }
         counter++
         currentIndex++
@@ -110,28 +123,27 @@ export default {
   },
 
   methods: {
-    async changePhotos(photos) {
-      this.photos = await Promise.all(photos.map((photoFile) => getBase64(photoFile)))
+    async changeItems(items) {
+      this.items = await Promise.all(items.map((itemFile) => getBase64(itemFile)))
     },
 
     async encrypt() {
-      const promises = this.photos.map(async (photo) => await CryptoJS.AES.encrypt(photo, this.secretString).toString())
+      const promises = this.items.map(async (item) => await CryptoJS.AES.encrypt(item, this.secretString).toString())
       this.encryptString = await Promise.all(promises).then((r) => r.join(separator))
     },
 
     async decrypt() {
-      const rawPhotos = this.encryptString.split(separator)
-      this.photos = await Promise.all(rawPhotos.map(async (photo) => await CryptoJS.AES.decrypt(photo, this.secretString).toString(CryptoJS.enc.Utf8)))
-      console.log('rawPhotos', rawPhotos)
+      const rawItems = this.encryptString.split(separator)
+      this.items = await Promise.all(rawItems.map(async (item) => await CryptoJS.AES.decrypt(item, this.secretString).toString(CryptoJS.enc.Utf8)))
     },
 
     copyResult() {
       copy(this.encryptString)
     },
 
-    saveResult() {
+    saveResult(path = 'secret.txt', fileContent = this.encryptString) {
       const zip = new JSZip();
-      zip.file('secret.txt', this.encryptString);
+      zip.file(path, fileContent);
       zip.generateAsync({ type: 'blob' }).then(function (content) {
         FileSaver.saveAs(content, 'download.zip');
       });
@@ -161,6 +173,37 @@ export default {
       else {
         this.updateSecret(this.secretString)
       }
+    },
+
+    checkForImage(item) {
+      return item.includes('image')
+    },
+
+
+    getFormat(item, type = 'image') {
+      return item.substring(`data:${type}/`.length, item.indexOf(";base64"))
+    },
+
+    removeItem(item) {
+      const index = this.items.findIndex((el) => el === item)
+      if (index !== undefined) this.items.splice(index, 1)
+    },
+
+    getFile(item) {
+      const file = this.checkForImage(item) ? new Image() : new Video()
+      file.src = item
+      return file
+    },
+
+    getFilename(item) {
+      const prefix = this.checkForImage(item) ? 'image' : 'video'
+      const format = this.getFormat(item, prefix)
+      return `${prefix}-${new Date().getTime()}.${format}`
+    },
+
+    downloadItem(item) {
+      const filename = this.getFilename(item)
+      this.saveResult(filename, this.getFile(item))
     }
   },
 
@@ -173,8 +216,18 @@ export default {
 </script>
 
 <style lang="scss">
-.photo {
+.media {
   max-width: 300px;
+}
 
+.item-card {
+  .controls {
+    opacity: 0;
+  }
+  &:hover {
+    .controls {
+      opacity: 1;
+    }
+  }
 }
 </style>
