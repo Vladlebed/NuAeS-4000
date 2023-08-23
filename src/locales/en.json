@@ -1,0 +1,16 @@
+{
+  "subtitle": "Securely share and view NuAeS",
+  "subtitle-end": "and not only",
+  "encryption": "Encryption",
+  "encryption-steps": "To encrypt your NuAeS, upload them through the \"Select media\" field in the \"Encryption\" card<br>Enter a secret word in the \"Secret word\" field. <br> The word must be one that only you and your recipient know.\n     <br> Do not send your secret word over the Internet!\n     <br> Agree with the recipient on a word that only you know together.\n     <br> For example, the nickname of your mother's boa constrictor.\n     <br> You can store the word in the browser's memory, but it's not safe!<br><br>Click on the \"Encrypt\" button<br>Download the archive using the \"Download\" button in the \"Encryption\" card<br>Send it to your recipient",
+  "decryption": "Decryption",
+  "decryption-steps": "To decrypt your NuAeS, upload the archive through the \"Upload Encrypted Archive\" field in the \"Decryption\" card<br>Enter a secret word in the \"Secret word\" field<br>Click on the \"Decrypt\" button<br>\uD83E\uDD29\uD83E\uDD29\uD83E\uDD29Enjoy NuAeS\uD83E\uDD29\uD83E\uDD29\uD83E\uDD29<br>You can download them one by one or as an archive. But keep in mind that this is already an unsafe way to store it!",
+  "description": "Your NuAeS are protected by <a href=\"https://en.wikipedia.org/wiki/Advanced_Encryption_Standard\" target=\"_blank\">AES</a> encryption.\n  The service does not send any requests at all, and naturally does not store your files anywhere. Honestly!\n                 <br> The project is purely the result of the idleness of its author and has an open source:",
+  "secret-word": "Secret word",
+  "save-secret-word": "Save to browser memory",
+  "select-media": "Select media",
+  "select-archive": "Download encrypted archive",
+  "download": "Download",
+  "encrypt": "Encrypt",
+  "decrypt": "Decrypt"
+}
