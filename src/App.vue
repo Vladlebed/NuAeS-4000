@@ -4,9 +4,34 @@
       <v-container ref="container">
         <v-row>
           <v-col>
+            <v-select v-model="currentLocale" class="mb-2" label="lang" :items="locales" density="compact" hide-details variant="underlined"/>
             <v-card color="white" class="pa-4">
-              <v-text-field v-model.trim="secretString" label="Cекретное слово" hide-details @update:model-value="updateSecret"/>
-              <v-checkbox v-model="allowSaveSecret" color="primary" label="Сохранить в памяти браузера" hide-details @update:model-value="changeAllowSaveSecret"/>
+              <v-card-title class="text-center">🍓🍓🍓NuAeS-4000🍓🍓🍓</v-card-title>
+              <v-card-subtitle class="text-center">{{ t('$vuetify.subtitle') }}</v-card-subtitle>
+              <v-card-subtitle class="text-center">{{ t('$vuetify.subtitle-end') }}</v-card-subtitle>
+              <v-divider class="mt-4"/>
+              <v-row>
+                <v-col cols="12" xl="6">
+                  <v-card-text class="font-weight-bold">{{ t('$vuetify.encryption') }}</v-card-text>
+                  <v-card-text v-html="t('$vuetify.encryption-steps')" />
+                </v-col>
+                <v-col cols="12" xl="6">
+                  <v-card-text class="font-weight-bold">{{ t('$vuetify.decryption') }}</v-card-text>
+                  <v-card-text v-html="t('$vuetify.decryption-steps')" />
+                </v-col>
+              </v-row>
+              <v-card-text class="font-weight-bold" v-html="t('$vuetify.description')"/>
+              <a href="/" target="_blank">
+                <img width="100" src="@/assets/icons/GitHub_Logo.png" alt="">
+              </a>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-card color="white" class="pa-4">
+              <v-text-field v-model.trim="secretString" :label="t('$vuetify.secret-word')" hide-details @update:model-value="updateSecret"/>
+              <v-checkbox v-model="allowSaveSecret" color="primary" :label="t('$vuetify.save-secret-word')" hide-details @update:model-value="changeAllowSaveSecret"/>
             </v-card>
           </v-col>
         </v-row>
@@ -14,38 +39,35 @@
           <v-col xl="6" md="12">
             <v-card color="white" class="pa-4 d-flex flex-column fill-height">
               <div class="flex-grow-1">
-                <v-card-title>Ввод</v-card-title>
-                <v-file-input label="Выбрать медиа" accept="image/png, image/jpeg, image/jpg, image/JPG, image/JPEG, video/mp4" variant="underlined" hide-details multiple class="mb-4" @update:model-value="changeItems"/>
+                <v-card-title>{{ t('$vuetify.encryption') }}</v-card-title>
+                <v-file-input :label="t('$vuetify.select-media')" accept="image/png, image/jpeg, image/jpg, image/JPG, image/JPEG, video/mp4" variant="underlined" hide-details multiple class="mb-4" @update:model-value="changeItems"/>
               </div>
-              <v-btn width="100%" color="primary" class="mt-auto" :disabled="!items.length || !secretString" @click="encrypt">Зашифровать</v-btn>
+              <v-row>
+                <v-col>
+                  <v-btn width="100%" color="primary" :disabled="!items.length || !secretString" @click="encrypt">{{t('$vuetify.encrypt')}}</v-btn>
+                </v-col>
+                <v-col>
+                  <v-btn width="100%" color="primary" :disabled="!encryptString" @click="saveResult([{ filename:'secret.txt', file: encryptString }], true)">{{t('$vuetify.download')}}</v-btn>
+                </v-col>
+              </v-row>
             </v-card>
           </v-col>
           <v-col xl="6" md="12">
             <v-card color="white" class="pa-4 fill-height">
-              <v-card-title>Вывод</v-card-title>
-              <div>
-                <div>
-                  <v-textarea v-if="isResultView" v-model="encryptString" variant="underlined" label="Шифрованная строка" hide-details class="mb-4"/>
-                  <v-checkbox v-model="isResultView" :label="isResultView ? 'Скрыть вывод' : 'Показать вывод'"/>
-                  <v-row align="center">
-                    <v-col xl="8" md="12">
-                      <v-btn color="primary" :disabled="!encryptString" class="mr-4" @click="copyResult">Скопировать</v-btn>
-                      <v-btn color="primary" :disabled="!encryptString" @click="saveResult">Скачать</v-btn>
-                    </v-col>
-                    <v-col xl="4" md="12">
-                      <v-file-input label="Загрузить архив" accept=".zip" variant="underlined" hide-details @update:model-value="putArchive"/>
-                    </v-col>
-                  </v-row>
-                </div>
-                <v-btn width="100%" color="primary" class="mt-4" :disabled="!encryptString || !secretString" @click="decrypt">Расшифровать</v-btn>
-              </div>
+              <v-card-title>{{t('$vuetify.decryption')}}</v-card-title>
+              <v-file-input :label="t('$vuetify.select-archive')" accept=".zip" variant="underlined" hide-details @update:model-value="putArchive"/>
+              <v-row>
+                <v-col>
+                  <v-btn width="100%" color="primary" class="mt-4" :disabled="!encryptString || !secretString" @click="decrypt">{{t('$vuetify.decrypt')}}</v-btn>
+                </v-col>
+                <v-col>
+                  <v-btn width="100%" color="primary" class="mt-4" :disabled="!encryptString" @click="downloadItems(items)">{{t('$vuetify.download')}}</v-btn>
+                </v-col>
+              </v-row>
             </v-card>
           </v-col>
         </v-row>
         <template v-if="items.length">
-          <div v-if="false" class="d-flex justify-center mt-4 mb-4">
-            <v-btn width="100%" color="white" variant="text">Скачать всё</v-btn>
-          </div>
           <v-row>
             <v-col class="d-flex justify-center">
               <div v-for="(column, columnIndex) in columns" :key="columnIndex">
@@ -58,7 +80,7 @@
                         mdi-close
                       </v-icon>
                     </v-btn>
-                    <v-btn v-if="false" icon color="primary" size="x-small">
+                    <v-btn icon color="primary" size="x-small" @click="downloadItems([item])">
                       <v-icon>
                         mdi-download
                       </v-icon>
@@ -75,8 +97,8 @@
 </template>
 
 <script>
+import { useLocale } from 'vuetify'
 import {getBase64} from "@/helpers";
-import copy from 'copy-to-clipboard'
 import JSZip from 'jszip';
 import FileSaver from 'file-saver';
 
@@ -92,6 +114,16 @@ export default {
       allowSaveSecret: false,
       isResultView: false,
       containerWidth: 1,
+    }
+  },
+
+  setup() {
+    const { t, current } = useLocale()
+
+    return {
+      t,
+      locales: ['ru', 'en'],
+      currentLocale: current,
     }
   },
 
@@ -137,15 +169,19 @@ export default {
       this.items = await Promise.all(rawItems.map(async (item) => await CryptoJS.AES.decrypt(item, this.secretString).toString(CryptoJS.enc.Utf8)))
     },
 
-    copyResult() {
-      copy(this.encryptString)
-    },
-
-    saveResult(path = 'secret.txt', fileContent = this.encryptString) {
+    saveResult(items, isLocked) {
+      if (items.length === 1 && items[0].file !== this.encryptString) {
+        const { filename, file } = items[0]
+        FileSaver.saveAs(file, filename);
+        return
+      }
       const zip = new JSZip();
-      zip.file(path, fileContent);
+      items.forEach(({ filename, file }) => {
+        zip.file(filename, file);
+      })
       zip.generateAsync({ type: 'blob' }).then(function (content) {
-        FileSaver.saveAs(content, 'download.zip');
+        const flag = isLocked ? 'locked' : 'opened'
+        FileSaver.saveAs(content, `filler-${flag}-${new Date().getTime()}.zip`);
       });
     },
 
@@ -176,12 +212,11 @@ export default {
     },
 
     checkForImage(item) {
-      return item.includes('image')
+      return this.getItemStructure(item)[1] === 'image'
     },
 
-
-    getFormat(item, type = 'image') {
-      return item.substring(`data:${type}/`.length, item.indexOf(";base64"))
+    getItemStructure(item) {
+      return item.match(/^data:(\w+)\/(\w+);/);
     },
 
     removeItem(item) {
@@ -189,21 +224,18 @@ export default {
       if (index !== undefined) this.items.splice(index, 1)
     },
 
-    getFile(item) {
-      const file = this.checkForImage(item) ? new Image() : new Video()
-      file.src = item
-      return file
-    },
-
-    getFilename(item) {
-      const prefix = this.checkForImage(item) ? 'image' : 'video'
-      const format = this.getFormat(item, prefix)
-      return `${prefix}-${new Date().getTime()}.${format}`
-    },
-
-    downloadItem(item) {
-      const filename = this.getFilename(item)
-      this.saveResult(filename, this.getFile(item))
+    async downloadItems(items) {
+      const files = await Promise.all(items.map(async (el, index) => {
+        const blob = await fetch(el)
+          .then(res => res.blob())
+        const format = this.getItemStructure(el)[2]
+        const filename = `filler-${new Date().getTime() + index + 1}.${format}`
+        return {
+          filename,
+          file: blob
+        }
+      }))
+      this.saveResult(files)
     }
   },
 
